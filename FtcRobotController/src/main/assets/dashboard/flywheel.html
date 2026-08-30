@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTC Flywheel Simulator</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:16px}
+        .container{max-width:1400px;margin:0 auto}
+        h1{text-align:center;font-size:24px;margin-bottom:16px;color:#60a5fa}
+        .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+        @media(max-width:1200px){.grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:800px){.grid{grid-template-columns:1fr}}
+        .card{background:#1e293b;border-radius:12px;padding:16px;border:1px solid #334155}
+        .card h2{font-size:13px;color:#a78bfa;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #334155;text-transform:uppercase;letter-spacing:0.5px}
+        .full-width{grid-column:1/-1}
+        .field{margin-bottom:10px}
+        .field label{display:block;font-size:11px;color:#94a3b8;margin-bottom:3px}
+        .field input,.field select{width:100%;padding:7px 10px;background:#0f172a;border:1px solid #475569;border-radius:6px;color:#e2e8f0;font-size:12px}
+        .field input:focus,.field select:focus{border-color:#60a5fa;outline:none}
+        .field .unit{font-size:9px;color:#64748b;margin-top:1px}
+        .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .result-box{background:#0f172a;border-radius:8px;padding:12px;margin-top:8px}
+        .result-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e293b;font-size:12px}
+        .result-row:last-child{border-bottom:none}
+        .result-label{color:#94a3b8}
+        .result-value{color:#60a5fa;font-weight:600}
+        .result-value.good{color:#10b981}
+        .result-value.warn{color:#f59e0b}
+        .result-value.bad{color:#ef4444}
+        .chart-area{background:#0f172a;border-radius:8px;padding:12px;height:250px}
+        canvas{width:100%;height:100%}
+        .btn{padding:8px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:transform .2s}
+        .btn:hover{transform:translateY(-1px)}
+        .btn-calc{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white}
+        .btn-save{background:linear-gradient(135deg,#10b981,#059669);color:white}
+        .btn-secondary{background:#334155;color:#94a3b8}
+        .btn-group{display:flex;gap:6px;margin-top:8px}
+        .tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+        .tab{padding:6px 12px;background:#334155;border:none;border-radius:6px;color:#94a3b8;font-size:11px;cursor:pointer;transition:all .2s}
+        .tab.active{background:#8b5cf6;color:white}
+        .tab:hover{background:#475569}
+        .section{display:none}
+        .section.active{display:block}
+        .toggle{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+        .toggle input[type="checkbox"]{width:16px;height:16px;cursor:pointer}
+        .toggle label{font-size:12px;color:#e2e8f0;cursor:pointer}
+        .back-link{color:#60a5fa;font-size:12px;text-decoration:none;display:inline-block;margin-top:8px}
+        .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+        .modal-overlay.active{display:flex}
+        .modal{background:#1e293b;border-radius:12px;padding:20px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;border:1px solid #334155}
+        .modal h3{color:#10b981;margin-bottom:12px;font-size:16px}
+        .modal pre{background:#0f172a;padding:12px;border-radius:6px;overflow-x:auto;font-size:10px;line-height:1.5;color:#a78bfa;white-space:pre-wrap}
+        .modal-actions{display:flex;gap:6px;margin-top:12px}
+        .modal-actions .btn{flex:1}
+        .toast{position:fixed;bottom:20px;right:20px;background:#10b981;color:white;padding:10px 16px;border-radius:8px;font-weight:600;z-index:2000;opacity:0;transition:opacity .3s;font-size:12px}
+        .toast.show{opacity:1}
+        .status-item{display:flex;align-items:center;gap:6px}
+        .config-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px}
+        .config-item{background:#0f172a;padding:6px 8px;border-radius:4px;display:flex;justify-content:space-between}
+        .config-item .label{color:#64748b}
+        .config-item .value{color:#60a5fa;font-weight:600}
+        .warning{background:#78350f;border:1px solid #f59e0b;border-radius:8px;padding:10px;margin-top:8px;font-size:11px;color:#fcd34d}
+    </style>
+</head>
+<body>
+    <script src="translations.js"></script>
+    <div class="container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h1 style="margin:0">FTC Flywheel Simulator</h1>
+            <div class="status-item" id="langSelectorContainer"></div>
+        </div>
+
+        <div class="grid">
+            <!-- Motors & Electrical -->
+            <div class="card">
+                <h2>Motors & Electrical</h2>
+                <div class="field">
+                    <label>Motor</label>
+                    <select id="motorType" onchange="recalc()">
+                        <optgroup label="REV Robotics">
+                            <option value="rev_hd_hex">REV HD Hex (No Gearbox) (REV-41-1291) - 6000 RPM</option>
+                            <option value="rev_hd_hex_20">REV HD Hex 20:1 (REV-41-1600) - 312 RPM</option>
+                            <option value="rev_hd_hex_40">REV HD Hex 40:1 (REV-41-1601) - 155 RPM</option>
+                            <option value="rev_hd_hex_60">REV HD Hex 60:1 (REV-41-1602) - 103 RPM</option>
+                            <option value="rev_core_hex">REV Core Hex (REV-41-1359) - 2000 RPM</option>
+                            <option value="rev_ilite">REV INFINITY Star (REV-31-1800) - 435 RPM</option>
+                        </optgroup>
+                        <optgroup label="GoBilda">
+                            <option value="gobilda_5202" selected>GoBilda 5202 - 435 RPM</option>
+                            <option value="gobilda_5203">GoBilda 5203 - 312 RPM</option>
+                            <option value="gobilda_5204">GoBilda 5204 - 1150 RPM</option>
+                            <option value="gobilda_5205">GoBilda 5205 - 435 RPM</option>
+                            <option value="gobilda_5206">GoBilda 5206 - 312 RPM</option>
+                        </optgroup>
+                        <optgroup label="Andymark">
+                            <option value="andymark_20">Andymark 20:1 - 312 RPM</option>
+                            <option value="andymark_37">Andymark 37:1 - 435 RPM</option>
+                            <option value="andymark_neverest">NeveRest 40 - 312 RPM</option>
+                        </optgroup>
+                        <optgroup label="Tetrix">
+                            <option value="tetrix_max">Tetrix MAX - 123 RPM</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Quantity</label>
+                        <input type="number" id="motorQty" value="2" min="1" max="6" onchange="recalc()">
+                    </div>
+                    <div class="field">
+                        <label>Efficiency (%)</label>
+                        <input type="number" id="efficiency" value="100" min="50" max="100" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Ratio</label>
+                        <input type="number" id="gearRatio" value="1" step="0.1" min="0.1" onchange="recalc()">
+                        <div class="unit">Reduction (motor:output)</div>
+                    </div>
+                    <div class="field">
+                        <label>Stator Limit (A)</label>
+                        <input type="number" id="statorLimit" value="8.5" step="0.1" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Supply Limit (A)</label>
+                        <input type="number" id="supplyLimit" value="20" step="0.1" onchange="recalc()">
+                    </div>
+                    <div class="field">
+                        <label>Supply Voltage (V)</label>
+                        <input type="number" id="supplyVoltage" value="12.6" step="0.1" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Battery Resistance (Ohm)</label>
+                    <input type="number" id="batteryResistance" value="0.015" step="0.001" onchange="recalc()">
+                </div>
+                <div class="result-box">
+                    <div class="result-row"><span class="result-label">Motor Free Speed</span><span class="result-value" id="resFreeSpeed">--</span></div>
+                    <div class="result-row"><span class="result-label">Output Speed (no load)</span><span class="result-value" id="resOutputSpeed">--</span></div>
+                    <div class="result-row"><span class="result-label">Max Achievable RPM</span><span class="result-value" id="resMaxRpm">--</span></div>
+                    <div class="result-row"><span class="result-label">Stall Torque</span><span class="result-value" id="resStallTorque">--</span></div>
+                </div>
+            </div>
+
+            <!-- Shooter Wheel -->
+            <div class="card">
+                <h2>Shooter Wheel</h2>
+                <div class="field">
+                    <label>Type</label>
+                    <select id="shooterMode" onchange="onShooterModeChange();recalc()">
+                        <option value="single-hooded">Single Shooter Wheel + Hood</option>
+                        <option value="dual-shooter">Dual Shooter Wheel</option>
+                        <option value="compound">Compound (Single → Dual)</option>
+                    </select>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Shooter Diameter (in)</label>
+                        <input type="number" id="shooterDiameter" value="3.54" step="0.01" onchange="recalc()">
+                    </div>
+                    <div class="field">
+                        <label>Shooter Weight (lbs)</label>
+                        <input type="number" id="shooterWeight" value="1.55" step="0.01" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Shooter Target Speed (rpm)</label>
+                    <input type="number" id="shooterTargetSpeed" value="2000" step="10" onchange="recalc()">
+                </div>
+                <div class="field">
+                    <label>Shooter MOI (in²*lbs)</label>
+                    <input type="number" id="shooterMoi" value="36" step="0.1" onchange="recalc()">
+                    <div class="unit">Leave 0 to auto-calculate from dimensions</div>
+                </div>
+                <div class="toggle">
+                    <input type="checkbox" id="useCustomShooterMoi" onchange="recalc()">
+                    <label for="useCustomShooterMoi">Use Custom Shooter MOI</label>
+                </div>
+
+                <div id="secondaryShooterSection" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #334155">
+                    <div style="font-size:11px;color:#a78bfa;margin-bottom:8px">Secondary Shooter</div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Secondary Diameter (in)</label>
+                            <input type="number" id="secondaryDiameter" value="4" step="0.01" onchange="recalc()">
+                        </div>
+                        <div class="field">
+                            <label>Secondary Weight (lbs)</label>
+                            <input type="number" id="secondaryWeight" value="1" step="0.01" onchange="recalc()">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Secondary to Shooter Ratio</label>
+                        <input type="number" id="secondaryRatio" value="1" step="0.1" onchange="recalc()">
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-row"><span class="result-label">Shooter MOI</span><span class="result-value" id="resShooterMoi">--</span></div>
+                    <div class="result-row"><span class="result-label">Shooter Radius</span><span class="result-value" id="resShooterRadius">--</span></div>
+                </div>
+            </div>
+
+            <!-- Flywheel -->
+            <div class="card">
+                <h2>Flywheel</h2>
+                <div class="toggle">
+                    <input type="checkbox" id="flywheelEnabled" checked onchange="onFlywheelToggle();recalc()">
+                    <label for="flywheelEnabled">Enabled</label>
+                </div>
+                <div id="flywheelConfig">
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Flywheel Diameter (in)</label>
+                            <input type="number" id="flywheelDiameter" value="3.54" step="0.01" onchange="recalc()">
+                        </div>
+                        <div class="field">
+                            <label>Flywheel Weight (lbs)</label>
+                            <input type="number" id="flywheelWeight" value="1.55" step="0.01" onchange="recalc()">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Flywheel MOI (in²*lbs)</label>
+                        <input type="number" id="flywheelMoi" value="24" step="0.1" onchange="recalc()">
+                    </div>
+                    <div class="toggle">
+                        <input type="checkbox" id="useCustomFlywheelMoi" onchange="recalc()">
+                        <label for="useCustomFlywheelMoi">Use Custom Flywheel MOI</label>
+                    </div>
+                    <div class="field">
+                        <label>Flywheel to Shooter Ratio</label>
+                        <input type="number" id="flywheelToShooterRatio" value="1" step="0.1" onchange="recalc()">
+                        <div class="unit">Reduction (flywheel:shooter)</div>
+                    </div>
+                </div>
+                <div class="result-box">
+                    <div class="result-row"><span class="result-label">Flywheel MOI</span><span class="result-value" id="resFlywheelMoi">--</span></div>
+                    <div class="result-row"><span class="result-label">Effective MOI</span><span class="result-value" id="resEffectiveMoi">--</span></div>
+                </div>
+            </div>
+
+            <!-- Projectile -->
+            <div class="card">
+                <h2>Projectile</h2>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Projectile Diameter (in)</label>
+                        <input type="number" id="projectileDiameter" value="2.9" step="0.01" onchange="recalc()">
+                    </div>
+                    <div class="field">
+                        <label>Projectile Weight (lbs)</label>
+                        <input type="number" id="projectileWeight" value="0.055" step="0.001" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Ball Initial Velocity (ft/s)</label>
+                        <input type="number" id="ballInitialVelocity" value="0" step="0.1" onchange="recalc()">
+                    </div>
+                    <div class="field">
+                        <label>Ball Initial Spin (rpm)</label>
+                        <input type="number" id="ballInitialSpin" value="0" step="1" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Ball MOI (in²*lbs)</label>
+                    <input type="number" id="ballMoi" value="2.5" step="0.1" onchange="recalc()">
+                </div>
+                <div class="toggle">
+                    <input type="checkbox" id="useCustomBallMoi" onchange="recalc()">
+                    <label for="useCustomBallMoi">Use Custom Ball MOI</label>
+                </div>
+                <div class="result-box">
+                    <div class="result-row"><span class="result-label">Ball Mass</span><span class="result-value" id="resBallMass">--</span></div>
+                    <div class="result-row"><span class="result-label">Ball Radius</span><span class="result-value" id="resBallRadius">--</span></div>
+                    <div class="result-row"><span class="result-label">Ball MOI</span><span class="result-value" id="resBallMoi">--</span></div>
+                </div>
+            </div>
+
+            <!-- LQR Tuning -->
+            <div class="card">
+                <h2>LQR Tuning</h2>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Q Velocity (rpm)</label>
+                        <input type="number" id="qVelocity" value="50" step="1" onchange="recalc()">
+                    </div>
+                    <div class="field">
+                        <label>R Volts (V)</label>
+                        <input type="number" id="rVolts" value="12" step="0.1" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Sensor Delay (ms)</label>
+                        <input type="number" id="sensorDelay" value="1" step="0.1" onchange="recalc()">
+                    </div>
+                    <div class="field">
+                        <label>Feedback dt (ms)</label>
+                        <input type="number" id="feedbackDt" value="20" step="1" onchange="recalc()">
+                    </div>
+                </div>
+                <div class="result-box">
+                    <div class="result-row"><span class="result-label">Feedback kP</span><span class="result-value" id="resFeedbackKp">--</span></div>
+                    <div class="result-row"><span class="result-label">Feedback kD</span><span class="result-value" id="resFeedbackKd">--</span></div>
+                </div>
+            </div>
+
+            <!-- Simulation Results -->
+            <div class="card">
+                <h2>Simulation</h2>
+                <div class="result-box">
+                    <div class="result-row"><span class="result-label">Spinup Time</span><span class="result-value" id="resSpinupTime">--</span></div>
+                    <div class="result-row"><span class="result-label">Recovery Time</span><span class="result-value" id="resRecoveryTime">--</span></div>
+                    <div class="result-row"><span class="result-label">kV</span><span class="result-value" id="resKv">--</span></div>
+                    <div class="result-row"><span class="result-label">kA</span><span class="result-value" id="resKa">--</span></div>
+                </div>
+            </div>
+
+            <!-- Shot Analysis -->
+            <div class="card full-width">
+                <h2>Shot Analysis</h2>
+                <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+                    <div class="result-box" style="text-align:center">
+                        <div style="font-size:9px;color:#64748b">Ball Exit Velocity</div>
+                        <div style="font-size:18px;font-weight:700;color:#60a5fa" id="resExitVelocity">--</div>
+                        <div style="font-size:9px;color:#64748b">ft/s</div>
+                    </div>
+                    <div class="result-box" style="text-align:center">
+                        <div style="font-size:9px;color:#64748b">Ball Spin Rate</div>
+                        <div style="font-size:18px;font-weight:700;color:#a78bfa" id="resSpinRate">--</div>
+                        <div style="font-size:9px;color:#64748b">rpm</div>
+                    </div>
+                    <div class="result-box" style="text-align:center">
+                        <div style="font-size:9px;color:#64748b">Energy to Ball</div>
+                        <div style="font-size:18px;font-weight:700;color:#10b981" id="resBallEnergy">--</div>
+                        <div style="font-size:9px;color:#64748b">J</div>
+                    </div>
+                    <div class="result-box" style="text-align:center">
+                        <div style="font-size:9px;color:#64748b">Speed Drop</div>
+                        <div style="font-size:18px;font-weight:700;color:#f59e0b" id="resSpeedDrop">--</div>
+                        <div style="font-size:9px;color:#64748b">rpm</div>
+                    </div>
+                    <div class="result-box" style="text-align:center">
+                        <div style="font-size:9px;color:#64748b">Post-Shot Speed</div>
+                        <div style="font-size:18px;font-weight:700;color:#f472b6" id="resPostShotSpeed">--</div>
+                        <div style="font-size:9px;color:#64748b">rpm</div>
+                    </div>
+                    <div class="result-box" style="text-align:center">
+                        <div style="font-size:9px;color:#64748b">Max Achievable RPM</div>
+                        <div style="font-size:18px;font-weight:700;color:#60a5fa" id="resMaxAchievable">--</div>
+                        <div style="font-size:9px;color:#64748b">rpm</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card full-width">
+                <h2>Simulation Chart</h2>
+                <div class="chart-area"><canvas id="simChart"></canvas></div>
+                <div class="btn-group">
+                    <button class="btn btn-calc" onclick="runSimulation()">Run Simulation</button>
+                    <button class="btn btn-save" onclick="showSaveModal()">Save Config</button>
+                    <button class="btn btn-secondary" onclick="downloadConfig()">Download .kt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal">
+            <h3>Flywheel Config (Kotlin)</h3>
+            <pre id="configCode"></pre>
+            <div class="modal-actions">
+                <button class="btn btn-save" onclick="copyConfig()">Copy</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('saveModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// MOTOR DATABASE - Based on ReCalc motor data
+// ============================================================
+const MOTORS = {
+    rev_hd_hex: { name: 'REV HD Hex (No Gearbox)', freeRpm: 6000, stallTorque: 14.87, kV: 52.4, resistance: 1.41, statorLimit: 8.5, supplyLimit: 10, weight: 8.25, partNumber: 'REV-41-1291' },
+    rev_hd_hex_20: { name: 'REV HD Hex 20:1', freeRpm: 312, stallTorque: 432, kV: 27.5, resistance: 5.3, statorLimit: 8.5, supplyLimit: 10, weight: 11.3, partNumber: 'REV-41-1600' },
+    rev_hd_hex_40: { name: 'REV HD Hex 40:1', freeRpm: 155, stallTorque: 864, kV: 13.7, resistance: 5.3, statorLimit: 8.5, supplyLimit: 10, weight: 11.3, partNumber: 'REV-41-1601' },
+    rev_hd_hex_60: { name: 'REV HD Hex 60:1', freeRpm: 103, stallTorque: 1296, kV: 9.1, resistance: 5.3, statorLimit: 8.5, supplyLimit: 10, weight: 11.3, partNumber: 'REV-41-1602' },
+    rev_core_hex: { name: 'REV Core Hex', freeRpm: 2000, stallTorque: 124, kV: 173.6, resistance: 3.4, statorLimit: 10, supplyLimit: 15, weight: 8.8, partNumber: 'REV-41-1359' },
+    rev_ilite: { name: 'REV INFINITY Star', freeRpm: 435, stallTorque: 560, kV: 38.4, resistance: 4.8, statorLimit: 8.5, supplyLimit: 10, weight: 9.6, partNumber: 'REV-31-1800' },
+    gobilda_5202: { name: 'GoBilda 5202', freeRpm: 435, stallTorque: 560, kV: 38.4, resistance: 4.8, statorLimit: 8.5, supplyLimit: 10, weight: 10.6 },
+    gobilda_5203: { name: 'GoBilda 5203', freeRpm: 312, stallTorque: 785, kV: 27.5, resistance: 4.8, statorLimit: 8.5, supplyLimit: 10, weight: 10.6 },
+    gobilda_5204: { name: 'GoBilda 5204', freeRpm: 1150, stallTorque: 212, kV: 101.5, resistance: 4.8, statorLimit: 8.5, supplyLimit: 10, weight: 10.6 },
+    gobilda_5205: { name: 'GoBilda 5205', freeRpm: 435, stallTorque: 560, kV: 38.4, resistance: 4.8, statorLimit: 8.5, supplyLimit: 10, weight: 11.3 },
+    gobilda_5206: { name: 'GoBilda 5206', freeRpm: 312, stallTorque: 785, kV: 27.5, resistance: 4.8, statorLimit: 8.5, supplyLimit: 10, weight: 11.3 },
+    andymark_20: { name: 'Andymark 20:1', freeRpm: 312, stallTorque: 750, kV: 27.5, resistance: 5.0, statorLimit: 8.5, supplyLimit: 10, weight: 10.4 },
+    andymark_37: { name: 'Andymark 37:1', freeRpm: 435, stallTorque: 560, kV: 38.4, resistance: 5.0, statorLimit: 8.5, supplyLimit: 10, weight: 10.4 },
+    andymark_neverest: { name: 'NeveRest 40', freeRpm: 312, stallTorque: 750, kV: 27.5, resistance: 5.0, statorLimit: 8.5, supplyLimit: 10, weight: 10.4 },
+    tetrix_max: { name: 'Tetrix MAX', freeRpm: 123, stallTorque: 2400, kV: 10.8, resistance: 4.0, statorLimit: 8.5, supplyLimit: 10, weight: 12.0 }
+};
+
+// ============================================================
+// UNIT CONVERSIONS
+// ============================================================
+const IN_TO_M = 0.0254;
+const LBS_TO_KG = 0.453592;
+const IN2_LBS_TO_KG_M2 = 0.000292639;
+const FT_S_TO_M_S = 0.3048;
+const RPM_TO_RAD_S = Math.PI / 30;
+const RAD_S_TO_RPM = 30 / Math.PI;
+
+// ============================================================
+// CORE CALCULATIONS (Based on ReCalc physics)
+// ============================================================
+function getSelectedMotor() {
+    const val = document.getElementById('motorType').value;
+    return MOTORS[val] || MOTORS.gobilda_5202;
+}
+
+function calcMOI(diameterIn, weightLbs) {
+    const r = (diameterIn / 2) * IN_TO_M;
+    const m = weightLbs * LBS_TO_KG;
+    return 0.5 * m * r * r;
+}
+
+function calcBallMOI(diameterIn, weightLbs) {
+    const r = (diameterIn / 2) * IN_TO_M;
+    const m = weightLbs * LBS_TO_KG;
+    return (2/5) * m * r * r;
+}
+
+function recalc() {
+    const motor = getSelectedMotor();
+    const qty = parseInt(document.getElementById('motorQty').value) || 1;
+    const eff = (parseFloat(document.getElementById('efficiency').value) || 100) / 100;
+    const ratio = parseFloat(document.getElementById('gearRatio').value) || 1;
+    
+    // Shooter
+    const shooterDia = parseFloat(document.getElementById('shooterDiameter').value) || 3.54;
+    const shooterWeight = parseFloat(document.getElementById('shooterWeight').value) || 1.55;
+    const useCustomShooterMoi = document.getElementById('useCustomShooterMoi').checked;
+    const shooterMoiInput = parseFloat(document.getElementById('shooterMoi').value) || 0;
+    
+    // Flywheel
+    const flywheelEnabled = document.getElementById('flywheelEnabled').checked;
+    const flywheelDia = parseFloat(document.getElementById('flywheelDiameter').value) || 3.54;
+    const flywheelWeight = parseFloat(document.getElementById('flywheelWeight').value) || 1.55;
+    const useCustomFlywheelMoi = document.getElementById('useCustomFlywheelMoi').checked;
+    const flywheelMoiInput = parseFloat(document.getElementById('flywheelMoi').value) || 0;
+    const flywheelToShooterRatio = parseFloat(document.getElementById('flywheelToShooterRatio').value) || 1;
+    
+    // Projectile
+    const projDia = parseFloat(document.getElementById('projectileDiameter').value) || 2.9;
+    const projWeight = parseFloat(document.getElementById('projectileWeight').value) || 0.055;
+    const useCustomBallMoi = document.getElementById('useCustomBallMoi').checked;
+    const ballMoiInput = parseFloat(document.getElementById('ballMoi').value) || 2.5;
+    
+    // Calculate MOIs
+    const shooterMoi = useCustomShooterMoi ? shooterMoiInput * IN2_LBS_TO_KG_M2 : calcMOI(shooterDia, shooterWeight);
+    const flywheelMoi = flywheelEnabled ? (useCustomFlywheelMoi ? flywheelMoiInput * IN2_LBS_TO_KG_M2 : calcMOI(flywheelDia, flywheelWeight)) : 0;
+    const effectiveMoi = shooterMoi + flywheelMoi * (flywheelToShooterRatio * flywheelToShooterRatio);
+    
+    const ballMass = projWeight * LBS_TO_KG;
+    const ballRadius = (projDia / 2) * IN_TO_M;
+    const ballMoi = useCustomBallMoi ? ballMoiInput * IN2_LBS_TO_KG_M2 : calcBallMOI(projDia, projWeight);
+    
+    // Motor calculations
+    const freeSpeedRadS = motor.freeRpm * RPM_TO_RAD_S;
+    const outputSpeedRadS = freeSpeedRadS / ratio;
+    const outputSpeedRpm = outputSpeedRadS * RAD_S_TO_RPM;
+    const maxAchievableRpm = outputSpeedRpm * eff;
+    
+    // Feedforward gains (simplified)
+    const kv = 1 / (motor.kV * qty * ratio * eff);
+    const ka = motor.resistance * effectiveMoi / (motor.kV * motor.kV * qty * qty * ratio * ratio * eff);
+    
+    // Feedback gains (simplified LQR)
+    const qVel = parseFloat(document.getElementById('qVelocity').value) || 50;
+    const rVolts = parseFloat(document.getElementById('rVolts').value) || 12;
+    const feedbackKp = Math.sqrt(qVel / rVolts) * kv;
+    const feedbackKd = 0;
+    
+    // Shot calculation (single-hooded)
+    const shooterRadius = (shooterDia / 2) * IN_TO_M;
+    const omegaWi = maxAchievableRpm * RPM_TO_RAD_S;
+    
+    // Ball shot physics (Team 449 equations)
+    const D = 4 * effectiveMoi * ballRadius * ballRadius + ballMoi * shooterRadius * shooterRadius + ballMass * shooterRadius * shooterRadius * ballRadius * ballRadius;
+    const omegaWf = D > 0 ? (4 * effectiveMoi * ballRadius * ballRadius * omegaWi) / D : 0;
+    const vBf = (shooterRadius / 2) * omegaWf;
+    const omegaBf = ballRadius > 0 ? vBf / ballRadius : 0;
+    
+    const exitVelocityFtS = vBf / FT_S_TO_M_S;
+    const spinRateRpm = (omegaBf * 60) / (2 * Math.PI);
+    const ballEnergyJ = 0.5 * ballMass * vBf * vBf + 0.5 * ballMoi * omegaBf * omegaBf;
+    const speedDropRpm = (omegaWi - omegaWf) * RAD_S_TO_RPM;
+    const postShotSpeedRpm = omegaWf * RAD_S_TO_RPM;
+    
+    // Spinup time (simplified)
+    const targetRadS = parseFloat(document.getElementById('shooterTargetSpeed').value) * RPM_TO_RAD_S;
+    const stallTorqueMotor = motor.stallTorque * 0.00706155 * qty;
+    const torqueAtTarget = stallTorqueMotor * (1 - targetRadS / (freeSpeedRadS / ratio));
+    const alpha = torqueAtTarget / effectiveMoi;
+    const spinupTime = alpha > 0 ? (targetRadS * 0.9) / alpha : 999;
+    
+    // Update UI
+    document.getElementById('resFreeSpeed').textContent = motor.freeRpm + ' rpm';
+    document.getElementById('resOutputSpeed').textContent = outputSpeedRpm.toFixed(0) + ' rpm';
+    document.getElementById('resMaxRpm').textContent = maxAchievableRpm.toFixed(0) + ' rpm';
+    document.getElementById('resStallTorque').textContent = motor.stallTorque + ' oz·in';
+    
+    document.getElementById('resShooterMoi').textContent = (shooterMoi / IN2_LBS_TO_KG_M2).toFixed(2) + ' in²·lbs';
+    document.getElementById('resShooterRadius').textContent = (shooterRadius / IN_TO_M).toFixed(2) + ' in';
+    
+    document.getElementById('resFlywheelMoi').textContent = (flywheelMoi / IN2_LBS_TO_KG_M2).toFixed(2) + ' in²·lbs';
+    document.getElementById('resEffectiveMoi').textContent = (effectiveMoi / IN2_LBS_TO_KG_M2).toFixed(2) + ' in²·lbs';
+    
+    document.getElementById('resBallMass').textContent = (ballMass * 1000).toFixed(1) + ' g';
+    document.getElementById('resBallRadius').textContent = (ballRadius / IN_TO_M).toFixed(2) + ' in';
+    document.getElementById('resBallMoi').textContent = (ballMoi / IN2_LBS_TO_KG_M2).toFixed(4) + ' in²·lbs';
+    
+    document.getElementById('resFeedbackKp').textContent = feedbackKp.toFixed(6);
+    document.getElementById('resFeedbackKd').textContent = feedbackKd.toFixed(6);
+    
+    document.getElementById('resSpinupTime').textContent = spinupTime.toFixed(3) + ' s';
+    document.getElementById('resRecoveryTime').textContent = (spinupTime * 0.3).toFixed(3) + ' s';
+    document.getElementById('resKv').textContent = kv.toFixed(6);
+    document.getElementById('resKa').textContent = ka.toFixed(6);
+    
+    document.getElementById('resExitVelocity').textContent = exitVelocityFtS.toFixed(2);
+    document.getElementById('resSpinRate').textContent = spinRateRpm.toFixed(0);
+    document.getElementById('resBallEnergy').textContent = ballEnergyJ.toFixed(3);
+    document.getElementById('resSpeedDrop').textContent = speedDropRpm.toFixed(0);
+    document.getElementById('resPostShotSpeed').textContent = postShotSpeedRpm.toFixed(0);
+    document.getElementById('resMaxAchievable').textContent = maxAchievableRpm.toFixed(0);
+    
+    // Color coding
+    const exitVelEl = document.getElementById('resExitVelocity');
+    exitVelEl.className = 'result-value ' + (exitVelocityFtS > 15 ? 'good' : exitVelocityFtS > 10 ? 'warn' : 'bad');
+    
+    // Save config
+    saveConfig();
+}
+
+function onShooterModeChange() {
+    const mode = document.getElementById('shooterMode').value;
+    document.getElementById('secondaryShooterSection').style.display = mode === 'dual-shooter' || mode === 'compound' ? 'block' : 'none';
+}
+
+function onFlywheelToggle() {
+    document.getElementById('flywheelConfig').style.display = document.getElementById('flywheelEnabled').checked ? 'block' : 'none';
+}
+
+// ============================================================
+// SIMULATION
+// ============================================================
+function runSimulation() {
+    const motor = getSelectedMotor();
+    const qty = parseInt(document.getElementById('motorQty').value) || 1;
+    const eff = (parseFloat(document.getElementById('efficiency').value) || 100) / 100;
+    const ratio = parseFloat(document.getElementById('gearRatio').value) || 1;
+    const targetRpm = parseFloat(document.getElementById('shooterTargetSpeed').value) || 2000;
+    
+    const shooterDia = parseFloat(document.getElementById('shooterDiameter').value) || 3.54;
+    const shooterWeight = parseFloat(document.getElementById('shooterWeight').value) || 1.55;
+    const useCustomShooterMoi = document.getElementById('useCustomShooterMoi').checked;
+    const shooterMoiInput = parseFloat(document.getElementById('shooterMoi').value) || 0;
+    const shooterMoi = useCustomShooterMoi ? shooterMoiInput * IN2_LBS_TO_KG_M2 : calcMOI(shooterDia, shooterWeight);
+    
+    const flywheelEnabled = document.getElementById('flywheelEnabled').checked;
+    const flywheelDia = parseFloat(document.getElementById('flywheelDiameter').value) || 3.54;
+    const flywheelWeight = parseFloat(document.getElementById('flywheelWeight').value) || 1.55;
+    const useCustomFlywheelMoi = document.getElementById('useCustomFlywheelMoi').checked;
+    const flywheelMoiInput = parseFloat(document.getElementById('flywheelMoi').value) || 0;
+    const flywheelToShooterRatio = parseFloat(document.getElementById('flywheelToShooterRatio').value) || 1;
+    const flywheelMoi = flywheelEnabled ? (useCustomFlywheelMoi ? flywheelMoiInput * IN2_LBS_TO_KG_M2 : calcMOI(flywheelDia, flywheelWeight)) : 0;
+    const effectiveMoi = shooterMoi + flywheelMoi * (flywheelToShooterRatio * flywheelToShooterRatio);
+    
+    const targetRadS = targetRpm * RPM_TO_RAD_S;
+    const freeSpeedRadS = motor.freeRpm * RPM_TO_RAD_S / ratio;
+    
+    // Simulate spinup
+    const dt = 0.001;
+    let omega = 0;
+    const data = [];
+    let time = 0;
+    
+    while (time < 3 && omega < targetRadS * 0.99) {
+        const torque = motor.stallTorque * 0.00706155 * qty * (1 - omega / freeSpeedRadS);
+        const alpha = (torque * eff - omega * 0.01) / effectiveMoi;
+        omega += alpha * dt;
+        omega = Math.max(0, omega);
+        
+        if (Math.floor(time * 100) % 2 === 0) {
+            data.push({ time, rpm: omega * RAD_S_TO_RPM });
+        }
+        time += dt;
+    }
+    
+    drawSimChart(data, targetRpm);
+}
+
+function drawSimChart(data, targetRpm) {
+    const canvas = document.getElementById('simChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.offsetWidth * dpr;
+    canvas.height = canvas.offsetHeight * dpr;
+    ctx.scale(dpr, dpr);
+    const w = canvas.offsetWidth, h = canvas.offsetHeight;
+    ctx.clearRect(0, 0, w, h);
+    
+    if (data.length < 2) {
+        ctx.fillStyle = '#64748b'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('Click "Run Simulation" to see chart', w / 2, h / 2);
+        return;
+    }
+    
+    const maxTime = data[data.length - 1].time;
+    const maxRpm = Math.max(targetRpm * 1.2, ...data.map(d => d.rpm));
+    
+    // Grid
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) { const y = (h / 4) * i; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    
+    // Target line
+    ctx.beginPath(); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+    const targetY = h - (targetRpm / maxRpm) * (h - 20) - 10;
+    ctx.moveTo(0, targetY); ctx.lineTo(w, targetY); ctx.stroke(); ctx.setLineDash([]);
+    
+    // Response line
+    ctx.beginPath(); ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
+    data.forEach((d, i) => {
+        const x = (d.time / maxTime) * w;
+        const y = h - (d.rpm / maxRpm) * (h - 20) - 10;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    
+    ctx.fillStyle = '#64748b'; ctx.font = '10px system-ui';
+    ctx.fillText('RPM', 10, 15);
+    ctx.fillText('Time (s)', w - 50, h - 5);
+    ctx.fillStyle = '#facc15'; ctx.fillText('Target: ' + targetRpm, w - 100, 15);
+}
+
+// ============================================================
+// CONFIG / EXPORT
+// ============================================================
+function generateConfigCode() {
+    const motor = getSelectedMotor();
+    const qty = parseInt(document.getElementById('motorQty').value) || 1;
+    const ratio = parseFloat(document.getElementById('gearRatio').value) || 1;
+    const eff = (parseFloat(document.getElementById('efficiency').value) || 100) / 100;
+    const targetRpm = parseFloat(document.getElementById('shooterTargetSpeed').value) || 2000;
+    const shooterDia = parseFloat(document.getElementById('shooterDiameter').value) || 3.54;
+    const kv = document.getElementById('resKv').textContent;
+    const ka = document.getElementById('resKa').textContent;
+    
+    return `package org.firstinspires.ftc.teamcode.config
+
+import com.acmerobotics.dashboard.config.Config
+import kotlin.math.PI
+
+@Config
+object FlywheelConfig {
+    // Auto-generated by FTC Flywheel Simulator
+    // Motor: ${motor.name} x${qty}
+    // Ratio: ${ratio}:1
+    // Target: ${targetRpm} RPM
+    
+    const val LEFT_MOTOR = "leftShooter"
+    const val RIGHT_MOTOR = "rightShooter"
+    const val MOTOR_TIMEOUT_MS = 500
+    
+    @JvmField var TARGET_RPM = ${targetRpm}.0
+    @JvmField var PIDF_P = 0.001
+    @JvmField var PIDF_I = 0.0
+    @JvmField var PIDF_D = 0.00001
+    @JvmField var FF_KS = 0.0
+    @JvmField var FF_KV = ${kv}
+    @JvmField var FF_KA = ${ka}
+    
+    const val GEAR_RATIO = ${ratio}
+    const val SHOOTER_DIAMETER_MM = ${(shooterDia * 25.4).toFixed(1)}
+    const val ENCODER_TICKS_PER_REV = 537.6
+    
+    const val READY_THRESHOLD = 0.05
+    const val MIN_READY_RPM = 100.0
+    
+    fun rpmToTicksPerSec(rpm: Double) = rpm * ENCODER_TICKS_PER_REV * GEAR_RATIO / 60.0
+    fun ticksPerSecToRpm(t: Double) = t * 60.0 / (ENCODER_TICKS_PER_REV * GEAR_RATIO)
+    fun rpmToSurfaceMps(rpm: Double) = rpm / 60.0 * PI * SHOOTER_DIAMETER_MM / 1000.0
+}`;
+}
+
+function showSaveModal() {
+    document.getElementById('configCode').textContent = generateConfigCode();
+    document.getElementById('saveModal').classList.add('active');
+}
+
+function copyConfig() {
+    navigator.clipboard.writeText(generateConfigCode()).then(() => showToast('Copied!'));
+}
+
+function downloadConfig() {
+    const blob = new Blob([generateConfigCode()], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'FlywheelConfig.kt';
+    a.click();
+}
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+const STORAGE_KEY = 'ftc_flywheel_sim_config';
+function saveConfig() {
+    const c = {};
+    ['motorType','motorQty','efficiency','gearRatio','statorLimit','supplyLimit','supplyVoltage','batteryResistance',
+     'shooterMode','shooterDiameter','shooterWeight','shooterTargetSpeed','shooterMoi','useCustomShooterMoi',
+     'flywheelEnabled','flywheelDiameter','flywheelWeight','flywheelMoi','useCustomFlywheelMoi','flywheelToShooterRatio',
+     'projectileDiameter','projectileWeight','ballInitialVelocity','ballInitialSpin','ballMoi','useCustomBallMoi',
+     'qVelocity','rVolts','sensorDelay','feedbackDt',
+     'secondaryDiameter','secondaryWeight','secondaryRatio'
+    ].forEach(id => { if (document.getElementById(id)) c[id] = document.getElementById(id).value; });
+    ['useCustomShooterMoi','useCustomFlywheelMoi','useCustomBallMoi','flywheelEnabled'].forEach(id => { c[id] = document.getElementById(id).checked; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
+}
+
+function loadConfig() {
+    try {
+        const c = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (c) {
+            Object.keys(c).forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (el.type === 'checkbox') el.checked = c[id];
+                else el.value = c[id];
+            });
+        }
+    } catch(e) {}
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Init
+window.onload = function() {
+    loadConfig();
+    onShooterModeChange();
+    onFlywheelToggle();
+    recalc();
+    document.getElementById('langSelectorContainer').appendChild(createLanguageSelector());
+};
+
+document.querySelectorAll('input,select').forEach(el => el.addEventListener('change', recalc));
+</script>
+</body>
+</html>

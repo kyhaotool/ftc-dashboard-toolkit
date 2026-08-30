@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- vendor-id 0x1267 is Logicool (Logitech) -->
+    <usb-device vendor-id="4717" product-id="768" />
+    <!-- vendor-id 0x046d is Logitech -->
+    <usb-device vendor-id="1133" product-id="2049" />
+    <usb-device vendor-id="1133" product-id="2050" />
+    <usb-device vendor-id="1133" product-id="2051" />
+    <!-- vendor-id 0x20d6 is PowerA -->
+    <usb-device vendor-id="8406" product-id="1" />
+    <usb-device vendor-id="8406" product-id="2" />
+    <!-- vendor-id 0x2dc8 is 8BitDo -->
+    <usb-device vendor-id="11720" product-id="11286" />
+    <!-- vendor-id 0x2e24 is Hyperkin -->
+    <usb-device vendor-id="11812" product-id="4" />
+    <!-- vendor-id 0x0525 is Netchip (for Hub communication) -->
+    <usb-device vendor-id="1317" product-id="4096" />
+</resources>

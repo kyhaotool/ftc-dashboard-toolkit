@@ -1,0 +1,27 @@
+apply from: '../build.common.gradle'
+apply from: '../build.dependencies.gradle'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'dev.frozenmilk.sinister.sloth.load'
+
+android {
+    namespace = 'hrc.robot34034'
+
+    packagingOptions {
+        jniLibs {
+            pickFirsts += ['**/*.so', '**/*.so']
+        }
+        jniLibs.useLegacyPackaging true
+    }
+}
+
+dependencies {
+    implementation project(':FtcRobotController')
+    implementation files('../libs/IgnitingInnovationAprilTagLibrary-1.0.jar')
+    implementation files('../libs/OpModeAnnotationProcessor.jar')
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+    }
+}

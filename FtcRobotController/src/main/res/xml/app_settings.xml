@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appSettings>
+    <setting key="pythonServerPort" value="25002" />
+    <setting key="blocklyServerPort" value="25003" />
+</appSettings>

@@ -1,0 +1,3 @@
+rootProject.name = 'HRC_34034_FTC2026'
+
+include ':FtcRobotController', ':TeamCode'
