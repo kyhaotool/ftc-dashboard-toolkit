@@ -1,462 +1,337 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTC Data Logger</title>
+    <title>DATA LOGGER</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:16px}
-        .container{max-width:1000px;margin:0 auto}
-        h1{text-align:center;font-size:24px;margin-bottom:16px;color:#f59e0b}
-        .status-bar{display:flex;justify-content:space-between;align-items:center;background:#1e293b;padding:12px 20px;border-radius:12px;margin-bottom:16px;border:1px solid #334155}
-        .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:8px}
-        .status-dot.connected{background:#10b981;box-shadow:0 0 8px #10b981}
-        .status-dot.disconnected{background:#ef4444}
-        .status-dot.recording{background:#ef4444;animation:pulse 1s infinite}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-        .btn-group{display:flex;gap:8px}
-        .btn{padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:transform .2s}
-        .btn:hover{transform:translateY(-1px)}
-        .btn-connect{background:#3b82f6;color:white}
-        .btn-record{background:#ef4444;color:white}
-        .btn-record.active{background:#10b981}
-        .btn-stop{background:#64748b;color:white}
-        .btn-export{background:#8b5cf6;color:white}
-        .btn-clear{background:#334155;color:#94a3b8}
-        .btn-secondary{background:#334155;color:#e2e8f0;border:1px solid #475569}
-        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-        @media(max-width:700px){.grid{grid-template-columns:1fr}}
-        .card{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155}
-        .card h2{font-size:14px;color:#a78bfa;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #334155}
-        .full-width{grid-column:1/-1}
-        .log-area{background:#0f172a;border-radius:8px;padding:12px;height:300px;overflow-y:auto;font-family:'Consolas',monospace;font-size:12px;line-height:1.6}
-        .log-entry{padding:2px 0;border-bottom:1px solid #1e293b}
-        .log-time{color:#64748b}
-        .log-key{color:#60a5fa}
-        .log-value{color:#4ade80}
-        .chart-container{background:#0f172a;border-radius:8px;padding:12px;height:250px;position:relative}
-        canvas{width:100%;height:100%}
-        .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-        .tag{background:#334155;color:#e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;transition:all .2s}
-        .tag:hover{background:#475569}
-        .tag.active{background:#8b5cf6;color:white}
-        .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        .stat-box{background:#0f172a;border-radius:8px;padding:12px;text-align:center}
-        .stat-value{font-size:20px;font-weight:700;color:#60a5fa}
-        .stat-label{font-size:10px;color:#64748b;margin-top:4px}
-        .select{background:#0f172a;border:1px solid #475569;color:#e2e8f0;padding:8px 12px;border-radius:8px;font-size:13px;width:100%}
-        .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
-        .modal-overlay.active{display:flex}
-        .modal{background:#1e293b;border-radius:16px;padding:24px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;border:1px solid #334155}
-        .modal h3{color:#10b981;margin-bottom:16px;font-size:18px}
-        .modal pre{background:#0f172a;padding:16px;border-radius:8px;overflow-x:auto;font-size:11px;line-height:1.5;color:#a78bfa;white-space:pre-wrap;max-height:400px;overflow-y:auto}
-        .modal-actions{display:flex;gap:8px;margin-top:16px}
-        .modal-actions .btn{flex:1}
-        .toast{position:fixed;bottom:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;font-weight:600;z-index:2000;opacity:0;transition:opacity .3s}
-        .toast.show{opacity:1}
-        .back-link{color:#60a5fa;font-size:13px;text-decoration:none;display:inline-block;margin-top:12px}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Consolas', monospace; background: #111; color: #ddd; min-height: 100vh; padding: 20px; }
+        h1 { font-size: 18px; font-weight: 400; letter-spacing: 2px; margin-bottom: 20px; color: #fff; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media(max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: #1a1a1a; border: 1px solid #333; padding: 16px; }
+        .card h2 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+        .full { grid-column: 1 / -1; }
+        .log { background: #0a0a0a; border: 1px solid #222; padding: 10px; height: 250px; overflow-y: auto; font-size: 10px; line-height: 1.6; }
+        .log .t { color: #444; }
+        .log .k { color: #888; }
+        .log .v { color: #aaa; }
+        .chart-box { background: #0a0a0a; border: 1px solid #222; height: 200px; }
+        .chart-box canvas { width: 100%; height: 100%; }
+        .btn { padding: 8px 16px; background: #ddd; color: #111; border: none; font-family: inherit; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .btn:hover { background: #fff; }
+        .btn.dark { background: #333; color: #ddd; }
+        .btn.dark:hover { background: #444; }
+        .btn.red { background: #5a2020; color: #ddd; }
+        .btn-group { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .stat { background: #111; border: 1px solid #222; padding: 10px; text-align: center; }
+        .stat-val { font-size: 18px; color: #fff; }
+        .stat-lbl { font-size: 9px color: #555; text-transform: uppercase; margin-top: 2px; }
+        .select { background: #111; border: 1px solid #333; color: #ddd; padding: 6px; font-family: inherit; font-size: 11px; width: 100%; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a1a; border: 1px solid #333; padding: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal h3 { font-size: 14px; color: #fff; margin-bottom: 12px; }
+        .modal pre { background: #0a0a0a; border: 1px solid #222; padding: 12px; font-size: 10px; line-height: 1.5; color: #aaa; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .modal-actions { display: flex; gap: 6px; margin-top: 12px; }
+        a.back { color: #666; font-size: 10px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
+        a.back:hover { color: #fff; }
+        .timer { font-size: 12px; color: #666; }
+        .rec { color: #888; }
+        .rec.on { color: #fff; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
-    <script src="translations.js"></script>
-    <div class="container">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <h1 data-i18n="data_logger" style="margin:0">FTC Data Logger</h1>
-            <div class="status-item" id="langSelectorContainer"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h1>DATA LOGGER</h1>
+        <div style="display:flex;gap:12px;align-items:center">
+            <span class="timer" id="timer">00:00:00</span>
+            <a href="index.html" class="back">BACK</a>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="card">
+            <h2>LIVE TELEMETRY</h2>
+            <div class="log" id="log"><div class="t">Waiting for data...</div></div>
+            <div style="margin-top:8px">
+                <select class="select" id="chartTag" onchange="updateChart()">
+                    <option value="">-- SELECT TAG --</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn" onclick="connect()">CONNECT</button>
+                <button class="btn red" id="btnRec" onclick="toggleRecord()">RECORD</button>
+                <button class="btn dark" onclick="clearData()">CLEAR</button>
+            </div>
         </div>
         
-        <div class="status-bar">
-            <div style="display:flex;align-items:center">
-                <div class="status-dot disconnected" id="statusDot"></div>
-                <span id="statusText" data-i18n="disconnected">Disconnected</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px">
-                <span style="font-size:12px;color:#64748b" id="recordTime">00:00:00</span>
-                <div class="btn-group">
-                    <button class="btn btn-connect" id="btnConnect" onclick="connectRobot()" data-i18n="connected">Connect</button>
-                    <button class="btn btn-record" id="btnRecord" onclick="startRecord()" data-i18n="record">Record</button>
-                    <button class="btn btn-stop" id="btnStop" onclick="stopRecord()" disabled data-i18n="stop">Stop</button>
-                    <button class="btn btn-export" id="btnExport" onclick="exportCSV()" disabled data-i18n="export_csv">Export CSV</button>
-                    <button class="btn btn-clear" onclick="clearData()" data-i18n="clear">Clear</button>
-                </div>
+        <div class="card">
+            <h2>CHART</h2>
+            <div class="chart-box"><canvas id="chart"></canvas></div>
+        </div>
+        
+        <div class="card">
+            <h2>STATS</h2>
+            <div class="stats">
+                <div class="stat"><div class="stat-val" id="sSamples">0</div><div class="stat-lbl">SAMPLES</div></div>
+                <div class="stat"><div class="stat-val" id="sTags">0</div><div class="stat-lbl">TAGS</div></div>
+                <div class="stat"><div class="stat-val" id="sDuration">0s</div><div class="stat-lbl">DURATION</div></div>
+                <div class="stat"><div class="stat-val" id="sRate">0/s</div><div class="stat-lbl">RATE</div></div>
             </div>
         </div>
-
-        <div class="grid">
-            <div class="card">
-                <h2>Live Telemetry</h2>
-                <div class="log-area" id="logArea">
-                    <div class="log-entry" style="color:#64748b">Waiting for telemetry data...</div>
-                </div>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <select class="select" id="chartTag" onchange="updateChart()">
-                        <option value="">-- Select tag to chart --</option>
-                    </select>
-                    <button class="btn btn-export" onclick="exportJSON()">Export JSON</button>
-                    <button class="btn btn-export" onclick="exportKotlin()">Export Kotlin</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Chart</h2>
-                <div class="chart-container">
-                    <canvas id="liveChart"></canvas>
-                </div>
-                <div class="tag-list" id="tagList"></div>
-            </div>
-
-            <div class="card full-width">
-                <h2>Statistics</h2>
-                <div class="stat-grid">
-                    <div class="stat-box"><div class="stat-value" id="statSamples">0</div><div class="stat-label">Samples</div></div>
-                    <div class="stat-box"><div class="stat-value" id="statTags">0</div><div class="stat-label">Tags</div></div>
-                    <div class="stat-box"><div class="stat-value" id="statDuration">0s</div><div class="stat-label">Duration</div></div>
-                    <div class="stat-box"><div class="stat-value" id="statRate">0/s</div><div class="stat-label">Rate</div></div>
-                </div>
-            </div>
-
-            <div class="card full-width">
-                <div style="display:flex;justify-content:space-between;align-items:center">
-                    <h2 style="margin:0">Quick Export</h2>
-                    <a href="index.html" class="back-link">← Back to Dashboard</a>
-                </div>
-                <div class="btn-group" style="margin-top:12px">
-                    <button class="btn btn-export" onclick="exportCSV()">CSV</button>
-                    <button class="btn btn-export" onclick="exportJSON()">JSON</button>
-                    <button class="btn btn-export" onclick="exportKotlin()">Kotlin Config</button>
-                    <button class="btn btn-export" onclick="showLastValues()">Last Values</button>
-                </div>
+        
+        <div class="card">
+            <h2>EXPORT</h2>
+            <div class="btn-group">
+                <button class="btn" onclick="exportCSV()">CSV</button>
+                <button class="btn" onclick="exportJSON()">JSON</button>
+                <button class="btn" onclick="exportKotlin()">KOTLIN</button>
+                <button class="btn dark" onclick="showLast()">LAST VALUES</button>
             </div>
         </div>
     </div>
-
-    <div class="modal-overlay" id="exportModal">
+    
+    <div class="modal-overlay" id="modal">
         <div class="modal">
-            <h3 id="exportTitle">Export</h3>
-            <pre id="exportContent"></pre>
+            <h3 id="modalTitle">EXPORT</h3>
+            <pre id="modalContent"></pre>
             <div class="modal-actions">
-                <button class="btn btn-export" onclick="copyExport()">Copy</button>
-                <button class="btn btn-export" onclick="downloadExport()">Download</button>
-                <button class="btn btn-secondary" onclick="closeExportModal()">Close</button>
+                <button class="btn" onclick="copyModal()">COPY</button>
+                <button class="btn" onclick="downloadModal()">DOWNLOAD</button>
+                <button class="btn dark" onclick="closeModal()">CLOSE</button>
             </div>
         </div>
     </div>
-    <div class="toast" id="toast"></div>
 
-<script>
-let ws = null;
-let isConnected = false;
-let isRecording = false;
-let recordedData = [];
-let sampleCount = 0;
-let recordStartTime = 0;
-let currentTags = new Set();
-let chartData = {};
-let lastValues = {};
-let simInterval = null;
-
-// === SIMULATION DATA GENERATOR ===
-const SIM_TAGS = ['flywheelVelocity','flywheelTarget','flywheelPower','motorCurrent','voltage','loopTime','targetVelocity'];
-let simTime = 0;
-
-function generateSimData() {
-    simTime += 0.05;
-    const target = 3000;
-    const velocity = target * (1 - Math.exp(-simTime * 2)) + Math.sin(simTime * 3) * 50 + (Math.random() - 0.5) * 20;
-    const power = Math.min(1, Math.max(-1, (target - velocity) * 0.001));
-    const current = 2 + Math.abs(power) * 8 + Math.random() * 0.5;
-    const voltage = 12.1 - current * 0.02 + Math.random() * 0.1;
-    const loopTime = 15 + Math.random() * 5;
-
-    return {
-        timestamp: Date.now(),
-        flywheelVelocity: velocity,
-        flywheelTarget: target,
-        flywheelPower: power,
-        motorCurrent: current,
-        voltage: voltage,
-        loopTime: loopTime,
-        targetVelocity: target
-    };
-}
-
-function startSim() {
-    simInterval = setInterval(() => {
-        const data = generateSimData();
-        handleData(data);
-    }, 50);
-}
-
-function stopSim() {
-    if (simInterval) clearInterval(simInterval);
-    simInterval = null;
-}
-
-// === CONNECTION ===
-function connectRobot() {
-    if (isConnected) { disconnect(); return; }
-    
-    const url = window.location.href;
-    const match = url.match(/http:\/\/([\d.]+):/);
-    const ip = match ? match[1] : '192.168.43.1';
-    
-    try {
-        ws = new WebSocket('ws://' + ip + ':8080/ws');
-        ws.onopen = () => {
-            isConnected = true;
-            setStatus('connected', 'Connected');
-            document.getElementById('btnConnect').textContent = 'Disconnect';
-            showToast('Connected to robot!');
-        };
-        ws.onmessage = (e) => {
-            try { handleData(JSON.parse(e.data)); } catch(err) {}
-        };
-        ws.onclose = () => { isConnected = false; setStatus('disconnected', 'Disconnected'); document.getElementById('btnConnect').textContent = 'Connect'; };
-        ws.onerror = () => { isConnected = false; setStatus('disconnected', 'Connection failed - starting simulation'); startSim(); };
-    } catch(e) {
-        setStatus('disconnected', 'Starting simulation mode');
-        startSim();
-    }
-}
-
-function disconnect() {
-    if (ws) { ws.close(); ws = null; }
-    isConnected = false;
-    stopSim();
-    setStatus('disconnected', 'Disconnected');
-    document.getElementById('btnConnect').textContent = 'Connect';
-}
-
-function setStatus(cls, text) {
-    document.getElementById('statusDot').className = 'status-dot ' + cls;
-    document.getElementById('statusText').textContent = text;
-}
-
-// === DATA HANDLING ===
-function handleData(data) {
-    if (!isRecording) return;
-    
-    recordedData.push(data);
-    sampleCount++;
-    
-    Object.keys(data).forEach(key => {
-        if (key === 'timestamp') return;
-        currentTags.add(key);
-        lastValues[key] = data[key];
-        if (!chartData[key]) chartData[key] = [];
-        chartData[key].push({ time: Date.now(), value: data[key] });
-        if (chartData[key].length > 500) chartData[key].shift();
-    });
-    
-    // Update log
-    const log = document.getElementById('logArea');
-    const time = new Date().toLocaleTimeString();
-    const entries = Object.entries(data).filter(([k]) => k !== 'timestamp').map(([k,v]) => `<span class="log-key">${k}</span>: <span class="log-value">${typeof v === 'number' ? v.toFixed(2) : v}</span>`).join(' ');
-    log.innerHTML += `<div class="log-entry"><span class="log-time">[${time}]</span> ${entries}</div>`;
-    if (log.children.length > 200) log.removeChild(log.firstChild);
-    log.scrollTop = log.scrollHeight;
-    
-    updateStats();
-    updateChart();
-    updateTags();
-}
-
-// === RECORDING ===
-function startRecord() {
-    isRecording = true;
-    recordedData = [];
-    sampleCount = 0;
-    recordStartTime = Date.now();
-    chartData = {};
-    currentTags.clear();
-    lastValues = {};
-    
-    document.getElementById('btnRecord').textContent = 'Recording...';
-    document.getElementById('btnRecord').classList.add('active');
-    document.getElementById('btnStop').disabled = false;
-    document.getElementById('btnExport').disabled = false;
-    setStatus('recording', 'Recording');
-    
-    // Auto-start simulation if not connected
-    if (!isConnected && !simInterval) startSim();
-    
-    recordTimer = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
-        const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
-        const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
-        const s = String(elapsed % 60).padStart(2, '0');
-        document.getElementById('recordTime').textContent = h + ':' + m + ':' + s;
-    }, 1000);
-}
-
-let recordTimer = null;
-
-function stopRecord() {
-    isRecording = false;
-    document.getElementById('btnRecord').textContent = 'Record';
-    document.getElementById('btnRecord').classList.remove('active');
-    document.getElementById('btnStop').disabled = true;
-    if (recordTimer) clearInterval(recordTimer);
-    setStatus('connected', 'Stopped (' + sampleCount + ' samples)');
-}
-
-function clearData() {
-    recordedData = [];
-    sampleCount = 0;
-    currentTags.clear();
-    chartData = {};
-    lastValues = {};
-    document.getElementById('logArea').innerHTML = '<div class="log-entry" style="color:#64748b">Data cleared. Click Record to start.</div>';
-    document.getElementById('tagList').innerHTML = '';
-    document.getElementById('statSamples').textContent = '0';
-    document.getElementById('statTags').textContent = '0';
-    document.getElementById('statDuration').textContent = '0s';
-    document.getElementById('statRate').textContent = '0/s';
-    document.getElementById('recordTime').textContent = '00:00:00';
-}
-
-// === STATS ===
-function updateStats() {
-    document.getElementById('statSamples').textContent = sampleCount;
-    document.getElementById('statTags').textContent = currentTags.size;
-    if (recordStartTime > 0) {
-        const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
-        document.getElementById('statDuration').textContent = elapsed + 's';
-        document.getElementById('statRate').textContent = (sampleCount / Math.max(1, elapsed)).toFixed(1) + '/s';
-    }
-}
-
-// === TAGS ===
-function updateTags() {
-    const tagList = document.getElementById('tagList');
-    const chartSelect = document.getElementById('chartTag');
-    tagList.innerHTML = '';
-    currentTags.forEach(tag => {
-        const el = document.createElement('div');
-        el.className = 'tag';
-        el.textContent = tag;
-        el.onclick = () => { document.getElementById('chartTag').value = tag; updateChart(); };
-        tagList.appendChild(el);
-    });
-    
-    // Update select
-    const current = chartSelect.value;
-    chartSelect.innerHTML = '<option value="">-- Select tag --</option>';
-    currentTags.forEach(tag => {
-        const opt = document.createElement('option');
-        opt.value = tag;
-        opt.textContent = tag;
-        chartSelect.appendChild(opt);
-    });
-    if (current && currentTags.has(current)) chartSelect.value = current;
-}
-
-// === CHART ===
-function updateChart() {
-    const tag = document.getElementById('chartTag').value;
-    if (!tag || !chartData[tag]) return;
-    
-    const canvas = document.getElementById('liveChart');
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = canvas.offsetWidth * dpr;
-    canvas.height = canvas.offsetHeight * dpr;
-    ctx.scale(dpr, dpr);
-    const w = canvas.offsetWidth, h = canvas.offsetHeight;
-    ctx.clearRect(0, 0, w, h);
-    
-    const data = chartData[tag];
-    if (data.length < 2) return;
-    
-    const values = data.map(d => d.value);
-    const min = Math.min(...values), max = Math.max(...values);
-    const range = max - min || 1;
-    
-    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
-    for (let i = 0; i <= 4; i++) { const y = (h / 4) * i; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
-    
-    ctx.beginPath(); ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
-    data.forEach((d, i) => {
-        const x = (i / (data.length - 1)) * w;
-        const y = h - ((d.value - min) / range) * (h - 20) - 10;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-    
-    ctx.fillStyle = '#64748b'; ctx.font = '10px system-ui';
-    ctx.fillText(max.toFixed(1), 4, 12);
-    ctx.fillText(min.toFixed(1), 4, h - 4);
-    ctx.fillText(tag, w / 2 - 20, 12);
-}
-
-// === EXPORT ===
-function exportCSV() {
-    if (recordedData.length === 0) { showToast('No data! Click Record first.'); return; }
-    const headers = Object.keys(recordedData[0]);
-    const csv = [headers.join(','), ...recordedData.map(row => headers.map(h => row[h] ?? '').join(','))].join('\n');
-    showExportModal('Export CSV', csv, 'data_log.csv');
-}
-
-function exportJSON() {
-    if (recordedData.length === 0) { showToast('No data! Click Record first.'); return; }
-    showExportModal('Export JSON', JSON.stringify(recordedData, null, 2), 'data_log.json');
-}
-
-function exportKotlin() {
-    if (recordedData.length === 0) { showToast('No data! Click Record first.'); return; }
-    const analysis = analyzeData(recordedData);
-    const code = `package org.firstinspires.ftc.teamcode.config\n\nimport com.acmerobotics.dashboard.config.Config\n\n@Config\ninternal object LoggedConfig {\n    // Auto-generated: ${new Date().toLocaleString()}\n    // Samples: ${recordedData.length}\n    \n${Object.entries(analysis).map(([k, v]) => `    @JvmField var ${k.toUpperCase()} = ${v.optimal.toFixed(4)} // avg=${v.avg.toFixed(2)}`).join('\n')}\n}`;
-    showExportModal('Export Kotlin', code, 'LoggedConfig.kt');
-}
-
-function showLastValues() {
-    const code = Object.entries(lastValues).map(([k, v]) => `${k}: ${typeof v === 'number' ? v.toFixed(4) : v}`).join('\n');
-    showExportModal('Last Values', code || 'No data yet', 'last_values.txt');
-}
-
-function analyzeData(data) {
-    const result = {};
-    Object.keys(data[0]).filter(k => k !== 'timestamp').forEach(key => {
-        const values = data.map(d => parseFloat(d[key])).filter(v => !isNaN(v));
-        if (values.length === 0) return;
-        result[key] = {
-            avg: values.reduce((a, b) => a + b, 0) / values.length,
-            min: Math.min(...values),
-            max: Math.max(...values),
-            optimal: values[Math.floor(values.length * 0.9)]
-        };
-    });
-    return result;
-}
-
-function showExportModal(title, content, filename) {
-    document.getElementById('exportTitle').textContent = title;
-    document.getElementById('exportContent').textContent = content;
-    document.getElementById('exportModal').classList.add('active');
-    document.getElementById('exportModal').dataset.filename = filename;
-    document.getElementById('exportModal').dataset.content = content;
-}
-function closeExportModal() { document.getElementById('exportModal').classList.remove('active'); }
-function copyExport() { navigator.clipboard.writeText(document.getElementById('exportModal').dataset.content).then(() => showToast('Copied!')); }
-function downloadExport() {
-    const blob = new Blob([document.getElementById('exportModal').dataset.content], { type: 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = document.getElementById('exportModal').dataset.filename;
-    a.click();
-}
-document.getElementById('exportModal').addEventListener('click', function(e) { if (e.target === this) closeExportModal(); });
-
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// Initialize language selector
-document.getElementById('langSelectorContainer').appendChild(createLanguageSelector());
-</script>
+    <script>
+        let ws, connected = false, recording = false, data = [], tags = new Set(), last = {};
+        let startTime = 0, samples = 0, chartData = {}, ctx, timer;
+        
+        function init() {
+            ctx = document.getElementById('chart').getContext('2d');
+            autoConnect();
+        }
+        
+        function autoConnect() {
+            const m = window.location.href.match(/http:\/\/([\d.]+):/);
+            const ip = m ? m[1] : '192.168.43.1';
+            
+            try {
+                ws = new WebSocket('ws://' + ip + ':8080/ws');
+                ws.onopen = () => { connected = true; addLog('Connected to ' + ip, 's'); };
+                ws.onmessage = (e) => { try { handleData(JSON.parse(e.data)); } catch(err) {} };
+                ws.onclose = () => { connected = false; addLog('Disconnected', 'w'); };
+                ws.onerror = () => { connected = false; startSim(); };
+            } catch(e) {
+                startSim();
+            }
+        }
+        
+        function connect() {
+            if (connected) { ws.close(); return; }
+            autoConnect();
+        }
+        
+        function startSim() {
+            let t = 0;
+            setInterval(() => {
+                if (!connected && recording) {
+                    t += 0.05;
+                    handleData({
+                        timestamp: Date.now(),
+                        velocity: 3000 * (1 - Math.exp(-t * 2)) + Math.sin(t * 3) * 50 + (Math.random() - 0.5) * 20,
+                        target: 3000,
+                        power: Math.min(1, Math.max(-1, (3000 - 2000) * 0.001)),
+                        current: 2 + Math.random() * 0.5
+                    });
+                }
+            }, 50);
+        }
+        
+        function handleData(d) {
+            if (!recording) return;
+            
+            data.push(d);
+            samples++;
+            
+            Object.keys(d).forEach(k => {
+                if (k === 'timestamp') return;
+                tags.add(k);
+                last[k] = d[k];
+                if (!chartData[k]) chartData[k] = [];
+                chartData[k].push(d[k]);
+                if (chartData[k].length > 300) chartData[k].shift();
+            });
+            
+            const log = document.getElementById('log');
+            const entries = Object.entries(d).filter(([k]) => k !== 'timestamp')
+                .map(([k, v]) => `<span class="k">${k}:</span> <span class="v">${typeof v === 'number' ? v.toFixed(2) : v}</span>`).join(' ');
+            log.innerHTML += `<div><span class="t">[${new Date().toLocaleTimeString()}]</span> ${entries}</div>`;
+            if (log.children.length > 100) log.removeChild(log.firstChild);
+            log.scrollTop = log.scrollHeight;
+            
+            updateTags();
+            updateStats();
+            updateChart();
+        }
+        
+        function toggleRecord() {
+            if (recording) {
+                recording = false;
+                document.getElementById('btnRec').classList.remove('on');
+                document.getElementById('btnRec').textContent = 'RECORD';
+                clearInterval(timer);
+            } else {
+                recording = true;
+                data = [];
+                samples = 0;
+                startTime = Date.now();
+                chartData = {};
+                tags.clear();
+                last = {};
+                document.getElementById('btnRec').classList.add('on');
+                document.getElementById('btnRec').textContent = 'RECORDING';
+                timer = setInterval(updateTimer, 1000);
+                
+                if (!connected) startSim();
+            }
+        }
+        
+        function updateTimer() {
+            const e = Math.floor((Date.now() - startTime) / 1000);
+            const h = String(Math.floor(e / 3600)).padStart(2, '0');
+            const m = String(Math.floor((e % 3600) / 60)).padStart(2, '0');
+            const s = String(e % 60).padStart(2, '0');
+            document.getElementById('timer').textContent = h + ':' + m + ':' + s;
+        }
+        
+        function updateTags() {
+            const sel = document.getElementById('chartTag');
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">-- SELECT TAG --</option>';
+            tags.forEach(t => {
+                const o = document.createElement('option');
+                o.value = t;
+                o.textContent = t;
+                sel.appendChild(o);
+            });
+            if (cur && tags.has(cur)) sel.value = cur;
+        }
+        
+        function updateStats() {
+            document.getElementById('sSamples').textContent = samples;
+            document.getElementById('sTags').textContent = tags.size;
+            if (startTime > 0) {
+                const e = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('sDuration').textContent = e + 's';
+                document.getElementById('sRate').textContent = (samples / Math.max(1, e)).toFixed(1) + '/s';
+            }
+        }
+        
+        function updateChart() {
+            const tag = document.getElementById('chartTag').value;
+            if (!tag || !chartData[tag]) return;
+            
+            const cv = ctx.canvas;
+            cv.width = cv.offsetWidth;
+            cv.height = cv.offsetHeight;
+            const w = cv.width, h = cv.height;
+            
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, w, h);
+            
+            const d = chartData[tag];
+            if (d.length < 2) return;
+            
+            let mn = Math.min(...d), mx = Math.max(...d);
+            let r = mx - mn || 1;
+            mn -= r * 0.1;
+            mx += r * 0.1;
+            
+            ctx.strokeStyle = '#1a1a1a';
+            for (let i = 0; i <= 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, h / 4 * i);
+                ctx.lineTo(w, h / 4 * i);
+                ctx.stroke();
+            }
+            
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            d.forEach((v, i) => {
+                const x = i / 300 * w;
+                const y = h - (v - mn) / (mx - mn) * h;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+        
+        function clearData() {
+            data = [];
+            samples = 0;
+            tags.clear();
+            chartData = {};
+            last = {};
+            document.getElementById('log').innerHTML = '<div class="t">Cleared.</div>';
+            document.getElementById('sSamples').textContent = '0';
+            document.getElementById('sTags').textContent = '0';
+            document.getElementById('sDuration').textContent = '0s';
+            document.getElementById('sRate').textContent = '0/s';
+            document.getElementById('timer').textContent = '00:00:00';
+        }
+        
+        function addLog(msg, cls) {
+            const l = document.getElementById('log');
+            l.innerHTML += `<div><span class="${cls}">${msg}</span></div>`;
+            l.scrollTop = l.scrollHeight;
+        }
+        
+        function exportCSV() {
+            if (!data.length) return;
+            const h = Object.keys(data[0]);
+            const csv = [h.join(','), ...data.map(r => h.map(k => r[k] ?? '').join(','))].join('\n');
+            showModal('CSV', csv);
+        }
+        
+        function exportJSON() {
+            if (!data.length) return;
+            showModal('JSON', JSON.stringify(data, null, 2));
+        }
+        
+        function exportKotlin() {
+            if (!data.length) return;
+            const code = `@Config\nobject LoggedConfig {\n${Object.entries(last).map(([k, v]) => `    @JvmField var ${k} = ${typeof v === 'number' ? v.toFixed(4) : v}`).join('\n')}\n}`;
+            showModal('KOTLIN', code);
+        }
+        
+        function showLast() {
+            const code = Object.entries(last).map(([k, v]) => `${k}: ${typeof v === 'number' ? v.toFixed(4) : v}`).join('\n');
+            showModal('LAST VALUES', code || 'No data');
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').textContent = content;
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('modal').dataset.content = content;
+        }
+        
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        function copyModal() { navigator.clipboard.writeText(document.getElementById('modal').dataset.content); }
+        function downloadModal() {
+            const b = new Blob([document.getElementById('modal').dataset.content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(b);
+            a.download = 'data_log.txt';
+            a.click();
+        }
+        
+        window.onload = init;
+    </script>
 </body>
 </html>

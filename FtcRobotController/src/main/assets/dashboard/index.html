@@ -3,211 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTC Dashboard Toolkit</title>
+    <title>HRC_34034</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
-        .hero{background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);padding:40px 20px;text-align:center;border-bottom:1px solid #334155}
-        .hero h1{font-size:32px;background:linear-gradient(135deg,#60a5fa,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
-        .hero p{color:#94a3b8;font-size:14px}
-        .container{max-width:1200px;margin:0 auto;padding:24px 20px}
-        .status-bar{background:#1e293b;border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;border:1px solid #334155;flex-wrap:wrap;gap:12px}
-        .status-item{display:flex;align-items:center;gap:8px}
-        .status-dot{width:10px;height:10px;border-radius:50%}
-        .status-dot.online{background:#10b981;box-shadow:0 0 8px #10b981}
-        .status-dot.offline{background:#ef4444}
-        .section-title{font-size:18px;color:#a78bfa;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #334155}
-        .tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:32px}
-        .tool-card{background:#1e293b;border-radius:16px;padding:24px;border:1px solid #334155;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;color:inherit;display:block}
-        .tool-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.3)}
-        .tool-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
-        .tool-card h3{font-size:18px;margin-bottom:8px}
-        .tool-card p{color:#94a3b8;font-size:13px;line-height:1.5}
-        .tool-tag{display:inline-block;background:#334155;padding:4px 10px;border-radius:12px;font-size:11px;margin-top:12px;color:#94a3b8}
-        .guide-section{background:#1e293b;border-radius:16px;padding:24px;margin-bottom:16px;border:1px solid #334155}
-        .guide-section h2{color:#a78bfa;font-size:16px;margin-bottom:16px;cursor:pointer}
-        .formula-box{background:#0f172a;border-radius:8px;padding:12px;margin:8px 0;border-left:3px solid #8b5cf6;font-family:Consolas,monospace;font-size:11px;line-height:1.6}
-        .formula-box .label{color:#8b5cf6;font-size:10px;text-transform:uppercase;margin-bottom:4px}
-        .quick-links{display:flex;gap:8px;flex-wrap:wrap}
-        .quick-link{background:#334155;color:#e2e8f0;padding:6px 12px;border-radius:6px;font-size:12px;text-decoration:none;transition:background .2s}
-        .quick-link:hover{background:#475569}
-        .sim-toggle{display:flex;align-items:center;gap:8px;background:#f59e0b;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;color:#0f172a}
-        .sim-toggle input{width:18px;height:18px;cursor:pointer}
-        .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-        .tab{padding:8px 16px;background:#334155;border:none;border-radius:8px;color:#94a3b8;font-size:13px;cursor:pointer;transition:all .2s}
-        .tab.active{background:#8b5cf6;color:white}
-        .tab:hover{background:#475569}
-        .footer{text-align:center;padding:24px;color:#64748b;font-size:12px;border-top:1px solid #334155;margin-top:32px}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Consolas', monospace; background: #000; color: #fff; min-height: 100vh; }
+        
+        .header {
+            background: #111;
+            padding: 24px;
+            border-bottom: 1px solid #222;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 400;
+            letter-spacing: 4px;
+        }
+        
+        .header p {
+            font-size: 11px;
+            color: #666;
+            margin-top: 8px;
+            letter-spacing: 2px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #222;
+        }
+        
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: #666;
+            padding: 12px 20px;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .nav-btn:hover {
+            color: #fff;
+        }
+        
+        .nav-btn.active {
+            color: #fff;
+            border-bottom-color: #fff;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .card {
+            background: #111;
+            border: 1px solid #222;
+            padding: 24px;
+            text-decoration: none;
+            color: #fff;
+            display: block;
+            transition: border-color 0.2s;
+        }
+        
+        .card:hover {
+            border-color: #666;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+        
+        .card-desc {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .card-tag {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 4px 8px;
+            border: 1px solid #333;
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .guide {
+            background: #111;
+            border: 1px solid #222;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .guide-title {
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #222;
+        }
+        
+        .formula {
+            background: #000;
+            border: 1px solid #222;
+            padding: 12px;
+            margin: 8px 0;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        
+        .formula-label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        
+        .info-section {
+            background: #111;
+            border: 1px solid #222;
+            padding: 24px;
+        }
+        
+        .info-title {
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #222;
+        }
+        
+        .info-item {
+            font-size: 12px;
+            color: #666;
+            padding: 8px 0;
+            border-bottom: 1px solid #111;
+        }
+        
+        .info-item span {
+            color: #fff;
+        }
+        
+        .links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .link {
+            background: transparent;
+            border: 1px solid #333;
+            color: #666;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 11px;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        
+        .link:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #222;
+            margin-bottom: 24px;
+        }
+        
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #333;
+            border-radius: 50%;
+        }
+        
+        .dot.on {
+            background: #fff;
+            box-shadow: 0 0 8px #fff;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: #333;
+            font-size: 10px;
+            border-top: 1px solid #111;
+            margin-top: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <script src="translations.js"></script>
-    <div class="hero">
-        <h1 data-i18n="app_title">FTC Dashboard Toolkit</h1>
-        <p>FTC DECODE 2025-2026</p>
+    <div class="header">
+        <h1>HRC_34034</h1>
+        <p>FTC 2026 DECODE | DASHBOARD</p>
     </div>
     
     <div class="container">
         <div class="status-bar">
-            <div class="status-item">
-                <div class="status-dot offline" id="robotStatus"></div>
-                <span id="robotStatusText" data-i18n="disconnected">Disconnected</span>
+            <div class="status-left">
+                <div class="dot" id="dot"></div>
+                <span id="status" style="font-size:11px;color:#666;letter-spacing:1px;">OFFLINE</span>
             </div>
-            <div class="status-item">
-                <span style="font-size:12px;color:#64748b">Robot: <strong id="robotIp">192.168.43.1</strong></span>
-            </div>
-            <div class="status-item" id="langSelectorContainer"></div>
-            <div class="sim-toggle">
-                <input type="checkbox" id="simMode" onchange="toggleSimMode()">
-                <label for="simMode" data-i18n="simulation_mode">Simulation Mode</label>
+            <div style="font-size:11px;color:#666;">
+                ROBOT: <span id="ip">192.168.43.1</span>
             </div>
         </div>
-
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('tools')" data-i18n="tools">Tools</button>
-            <button class="tab" onclick="showTab('guide')" data-i18n="guide">Guide & Formulas</button>
-            <button class="tab" onclick="showTab('info')" data-i18n="info">System Info</button>
+        
+        <div class="nav">
+            <button class="nav-btn active" onclick="showTab('tools')">TOOLS</button>
+            <button class="nav-btn" onclick="showTab('guide')">GUIDE</button>
+            <button class="nav-btn" onclick="showTab('info')">INFO</button>
         </div>
-
-        <!-- Tools Tab -->
-        <div id="tab-tools">
-            <h2 class="section-title" data-i18n="dashboard_tools">Dashboard Tools</h2>
-            <div class="tools-grid">
-                <a href="flywheel.html" class="tool-card">
-                    <div class="tool-icon" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">🔧</div>
-                    <h3 data-i18n="flywheel_calc">Flywheel Calculator</h3>
-                    <p data-i18n="flywheel_calc_desc">Calculate gear ratio, RPM, velocity, spin-up time for flywheel subsystem.</p>
-                    <span class="tool-tag">Calculator</span>
+        
+        <!-- TOOLS -->
+        <div class="section active" id="sec-tools">
+            <div class="grid">
+                <a href="pid_dashboard.html" class="card">
+                    <div class="card-title">PID DASHBOARD</div>
+                    <div class="card-desc">Multi-module PID tuning. Select drive, arm, intake, wrist, outtake. Realtime charts.</div>
+                    <span class="card-tag">Tuner</span>
                 </a>
                 
-                <a href="autotune.html" class="tool-card">
-                    <div class="tool-icon" style="background:linear-gradient(135deg,#f472b6,#ec4899)">🎯</div>
-                    <h3 data-i18n="pid_autotune">PID Auto-Tuner</h3>
-                    <p data-i18n="pid_autotune_desc">Auto-tune PIDF for motor using Ziegler-Nichols method.</p>
-                    <span class="tool-tag">Auto-Tune</span>
+                <a href="pid_tuner.html" class="card">
+                    <div class="card-title">PID TUNER</div>
+                    <div class="card-desc">Single module PID tuning. Simple interface for quick tuning.</div>
+                    <span class="card-tag">Tuner</span>
                 </a>
                 
-                <a href="datalog.html" class="tool-card">
-                    <div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">📊</div>
-                    <h3>Data Logger</h3>
-                    <p>Ghi lại telemetry data realtime, export CSV/JSON/Kotlin config.</p>
-                    <span class="tool-tag">Logger</span>
+                <a href="autotune.html" class="card">
+                    <div class="card-title">AUTO TUNE</div>
+                    <div class="card-desc">Auto-tune PID using Ziegler-Nichols method. Set target and let it tune.</div>
+                    <span class="card-tag">Auto</span>
+                </a>
+                
+                <a href="datalog.html" class="card">
+                    <div class="card-title">DATA LOGGER</div>
+                    <div class="card-desc">Record telemetry data. Export to CSV for analysis.</div>
+                    <span class="card-tag">Logger</span>
+                </a>
+                
+                <a href="flywheel.html" class="card">
+                    <div class="card-title">FLYWHEEL CALC</div>
+                    <div class="card-desc">Calculate gear ratio, RPM, velocity, spin-up time.</div>
+                    <span class="card-tag">Calc</span>
                 </a>
             </div>
         </div>
-
-        <!-- Guide Tab -->
-        <div id="tab-guide" style="display:none">
-            <div class="guide-section">
-                <h2>Flywheel Formulas</h2>
-                <div class="formula-box">
-                    <div class="label">1. SHAFT RPM</div>
-                    <div>Shaft RPM = (Motor RPM / Gear Ratio) × Efficiency</div>
+        
+        <!-- GUIDE -->
+        <div class="section" id="sec-guide">
+            <div class="guide">
+                <div class="guide-title">PID FORMULAS</div>
+                
+                <div class="formula">
+                    <div class="formula-label">ZIEGLER-NICHOLS</div>
+                    <div>Kp = 0.6 * Ku</div>
+                    <div>Ki = 2 * Kp / Tu</div>
+                    <div>Kd = Kp * Tu / 8</div>
                 </div>
-                <div class="formula-box">
-                    <div class="label">2. SURFACE SPEED</div>
-                    <div>Surface Speed (m/s) = Shaft RPM × π × Diameter / 60</div>
+                
+                <div class="formula">
+                    <div class="formula-label">PID OUTPUT</div>
+                    <div>Output = Kp*error + Ki*integral + Kd*derivative + Kf*feedforward</div>
                 </div>
-                <div class="formula-box">
-                    <div class="label">3. MOMENT OF INERTIA</div>
-                    <div>I = 0.5 × m × r²</div>
-                    <div>m = density × π × r² × width</div>
+                
+                <div class="formula">
+                    <div class="formula-label">ERROR</div>
+                    <div>error = target - current_position</div>
                 </div>
-                <div class="formula-box">
-                    <div class="label">4. SPIN-UP TIME</div>
-                    <div>t = (ω_target × 0.9) / α</div>
-                    <div>α = Torque / I</div>
+                
+                <div class="formula">
+                    <div class="formula-label">INTEGRAL</div>
+                    <div>integral += error * dt</div>
                 </div>
-                <div class="formula-box">
-                    <div class="label">5. FEEDFORWARD</div>
-                    <div>kV = 1 / (kV_motor × efficiency × gear_ratio)</div>
+                
+                <div class="formula">
+                    <div class="formula-label">DERIVATIVE</div>
+                    <div>derivative = (error - last_error) / dt</div>
                 </div>
             </div>
             
-            <div class="guide-section">
-                <h2>PID Formulas</h2>
-                <div class="formula-box">
-                    <div class="label">ZIEGLER-NICHOLS</div>
-                    <div>Kp = 0.6 × Ku</div>
-                    <div>Ki = 2 × Kp / Tu</div>
-                    <div>Kd = Kp × Tu / 8</div>
-                    <div>Ku = Ultimate Gain, Tu = Ultimate Period</div>
+            <div class="guide">
+                <div class="guide-title">TUNING GUIDE</div>
+                
+                <div class="formula">
+                    <div class="formula-label">START</div>
+                    <div>Set Ki=0, Kd=0. Increase Kp until robot oscillates.</div>
                 </div>
-                <div class="formula-box">
-                    <div class="label">PIDF OUTPUT</div>
-                    <div>Output = P×error + I×∫error + D×derror/dt + FF</div>
-                    <div>FF = kS×sign(v) + kV×v + kA×a</div>
+                
+                <div class="formula">
+                    <div class="formula-label">STEP 2</div>
+                    <div>Set Kp = 0.5 * oscillation_value. Increase Ki slowly.</div>
+                </div>
+                
+                <div class="formula">
+                    <div class="formula-label">STEP 3</div>
+                    <div>Add Kd to reduce overshoot. Fine-tune all values.</div>
                 </div>
             </div>
         </div>
-
-        <!-- Info Tab -->
-        <div id="tab-info" style="display:none">
-            <div class="guide-section">
-                <h2>System Info</h2>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-                    <div>
-                        <h3 style="color:#94a3b8;font-size:14px;margin-bottom:8px">Project</h3>
-                        <div style="font-size:13px;line-height:1.8">
-                            <div>Name: <strong>FTC Flywheel Toolkit</strong></div>
-                            <div>Team: <strong>Universal FTC Tools</strong></div>
-                            <div>Season: <strong>DECODE 2025-2026</strong></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 style="color:#94a3b8;font-size:14px;margin-bottom:8px">Quick Links</h3>
-                        <div class="quick-links">
-                            <a href="https://ftc-docs.firstinspires.org" target="_blank" class="quick-link">FTC Docs</a>
-                            <a href="https://ftc-community.firstinspires.org" target="_blank" class="quick-link">Community</a>
-                            <a href="https://www.reca.lc/flywheel" target="_blank" class="quick-link">ReCalc</a>
-                            <a href="https://github.com/fgcvietnam/FGC26Robot" target="_blank" class="quick-link">GitHub</a>
-                        </div>
+        
+        <!-- INFO -->
+        <div class="section" id="sec-info">
+            <div class="info-grid">
+                <div class="info-section">
+                    <div class="info-title">PROJECT</div>
+                    <div class="info-item">Team: <span>HRC_34034</span></div>
+                    <div class="info-item">Season: <span>DECODE 2025-2026</span></div>
+                    <div class="info-item">Platform: <span>FTC SDK 11.1.0</span></div>
+                    <div class="info-item">Dashboard: <span>v1.0</span></div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-title">LINKS</div>
+                    <div class="links">
+                        <a href="https://ftc-docs.firstinspires.org" target="_blank" class="link">FTC DOCS</a>
+                        <a href="https://ftc-community.firstinspires.org" target="_blank" class="link">COMMUNITY</a>
+                        <a href="https://www.reca.lc" target="_blank" class="link">RECALC</a>
+                        <a href="https://github.com" target="_blank" class="link">GITHUB</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="footer">
-        FTC Flywheel Toolkit v2.0 | FTC DECODE 2025-2026
-    </div>
+    <div class="footer">HRC_34034 | FTC 2026</div>
     
     <script>
-        // Auto-detect robot IP
-        const currentUrl = window.location.href;
-        const ipMatch = currentUrl.match(/http:\/\/([\d.]+):/);
-        if (ipMatch) document.getElementById('robotIp').textContent = ipMatch[1];
-        
-        // Simulation mode
-        function toggleSimMode() {
-            const enabled = document.getElementById('simMode').checked;
-            localStorage.setItem('hrc_sim_mode', enabled);
-            if (enabled) {
-                document.getElementById('robotStatus').className = 'status-dot online';
-                document.getElementById('robotStatusText').textContent = 'Simulation Mode';
-            } else {
-                document.getElementById('robotStatus').className = 'status-dot offline';
-                document.getElementById('robotStatusText').textContent = 'Disconnected';
-            }
-        }
-        
-        // Load saved sim mode
-        if (localStorage.getItem('hrc_sim_mode') === 'true') {
-            document.getElementById('simMode').checked = true;
-            document.getElementById('robotStatus').className = 'status-dot online';
-            document.getElementById('robotStatusText').textContent = 'Simulation Mode';
-        }
-        
-        // Tab switching
         function showTab(name) {
-            document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
-            document.getElementById('tab-' + name).style.display = 'block';
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('sec-' + name).classList.add('active');
             event.target.classList.add('active');
         }
         
-        // Initialize language selector
-        document.getElementById('langSelectorContainer').appendChild(createLanguageSelector());
+        // Auto-detect IP
+        const m = window.location.href.match(/http:\/\/([\d.]+):/);
+        if (m) document.getElementById('ip').textContent = m[1];
     </script>
 </body>
 </html>

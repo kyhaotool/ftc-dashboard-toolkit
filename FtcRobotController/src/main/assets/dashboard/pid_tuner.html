@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PID TUNER</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Consolas', monospace; background: #000; color: #fff; min-height: 100vh; }
+        .header { background: #111; padding: 16px 24px; border-bottom: 1px solid #333; }
+        .header h1 { font-size: 18px; font-weight: 400; letter-spacing: 2px; }
+        .header p { font-size: 11px; color: #666; margin-top: 4px; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .panel { background: #111; border: 1px solid #222; padding: 20px; margin-bottom: 16px; }
+        .panel-title { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #222; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .field-row { display: flex; gap: 4px; }
+        .field input { flex: 1; background: #000; border: 1px solid #333; color: #fff; padding: 10px; font-family: inherit; font-size: 14px; }
+        .field input:focus { outline: none; border-color: #fff; }
+        .btn { background: #fff; color: #000; border: none; padding: 10px 16px; font-family: inherit; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .btn:hover { background: #ccc; }
+        .btn.outline { background: transparent; color: #fff; border: 1px solid #333; }
+        .btn.outline:hover { border-color: #fff; }
+        .btn-sm { padding: 10px 14px; font-size: 14px; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat { background: #000; border: 1px solid #222; padding: 12px; }
+        .stat-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-value { font-size: 24px; }
+        .actions { display: flex; gap: 8px; margin-top: 20px; }
+        .chart-box { background: #000; border: 1px solid #222; height: 150px; margin-top: 12px; }
+        .chart-box canvas { width: 100%; height: 100%; }
+        .footer { text-align: center; padding: 20px; color: #333; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PID TUNER</h1>
+        <p>SINGLE MODULE</p>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <div class="panel-title">PARAMETERS</div>
+            
+            <div class="field">
+                <label>Kp</label>
+                <div class="field-row">
+                    <input type="number" id="kp" value="0.010" step="0.001">
+                    <button class="btn btn-sm" onclick="adj('kp',0.001)">+</button>
+                    <button class="btn btn-sm outline" onclick="adj('kp',-0.001)">-</button>
+                </div>
+            </div>
+            
+            <div class="field">
+                <label>Ki</label>
+                <div class="field-row">
+                    <input type="number" id="ki" value="0.000" step="0.001">
+                    <button class="btn btn-sm" onclick="adj('ki',0.001)">+</button>
+                    <button class="btn btn-sm outline" onclick="adj('ki',-0.001)">-</button>
+                </div>
+            </div>
+            
+            <div class="field">
+                <label>Kd</label>
+                <div class="field-row">
+                    <input type="number" id="kd" value="0.000" step="0.001">
+                    <button class="btn btn-sm" onclick="adj('kd',0.001)">+</button>
+                    <button class="btn btn-sm outline" onclick="adj('kd',-0.001)">-</button>
+                </div>
+            </div>
+            
+            <div class="field">
+                <label>TARGET</label>
+                <div class="field-row">
+                    <input type="number" id="target" value="500" step="50">
+                    <button class="btn btn-sm" onclick="adj('target',50)">+</button>
+                    <button class="btn btn-sm outline" onclick="adj('target',-50)">-</button>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button class="btn" onclick="send()">SEND</button>
+                <button class="btn" onclick="start()">START</button>
+                <button class="btn outline" onclick="stop()">STOP</button>
+                <button class="btn outline" onclick="reset()">RESET</button>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-title">STATUS</div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">ENCODER</div>
+                    <div class="stat-value" id="v-enc">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">ERROR</div>
+                    <div class="stat-value" id="v-err">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">OUTPUT</div>
+                    <div class="stat-value" id="v-out">0.00</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">VELOCITY</div>
+                    <div class="stat-value" id="v-vel">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-title">RESPONSE</div>
+            <div class="chart-box"><canvas id="chart"></canvas></div>
+        </div>
+    </div>
+    
+    <div class="footer">HRC_34034</div>
+
+    <script>
+        let enc = 0, err = 0, out = 0, vel = 0;
+        let data = [], tgt = [];
+        const MAX = 100;
+        let ctx;
+        
+        function init() {
+            ctx = document.getElementById('chart').getContext('2d');
+            loop();
+        }
+        
+        function loop() {
+            const kp = parseFloat(document.getElementById('kp').value);
+            const t = parseFloat(document.getElementById('target').value);
+            
+            err = t - enc;
+            out = Math.max(-1, Math.min(1, kp * err * 0.01));
+            enc += out * 10;
+            vel = out * 1000;
+            
+            document.getElementById('v-enc').textContent = Math.round(enc);
+            document.getElementById('v-err').textContent = Math.round(err);
+            document.getElementById('v-out').textContent = out.toFixed(2);
+            document.getElementById('v-vel').textContent = Math.round(vel);
+            
+            data.push(enc);
+            tgt.push(t);
+            if (data.length > MAX) { data.shift(); tgt.shift(); }
+            
+            draw();
+            requestAnimationFrame(loop);
+        }
+        
+        function draw() {
+            const cv = ctx.canvas;
+            cv.width = cv.offsetWidth;
+            cv.height = cv.offsetHeight;
+            const w = cv.width, h = cv.height;
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, w, h);
+            
+            if (data.length < 2) return;
+            
+            let all = [...data, ...tgt];
+            let mn = Math.min(...all), mx = Math.max(...all);
+            let r = mx - mn || 1;
+            mn -= r * 0.1;
+            mx += r * 0.1;
+            
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, h / 4 * i);
+                ctx.lineTo(w, h / 4 * i);
+                ctx.stroke();
+            }
+            
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            tgt.forEach((v, i) => {
+                const x = i / (MAX - 1) * w;
+                const y = h - (v - mn) / (mx - mn) * h;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            data.forEach((v, i) => {
+                const x = i / (MAX - 1) * w;
+                const y = h - (v - mn) / (mx - mn) * h;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+        
+        function adj(id, d) {
+            const el = document.getElementById(id);
+            let v = parseFloat(el.value) + d;
+            if (id === 'target') v = Math.round(v / 50) * 50;
+            else v = Math.max(0, parseFloat(v.toFixed(4)));
+            el.value = v;
+        }
+        
+        function send() {
+            const p = {
+                kp: parseFloat(document.getElementById('kp').value),
+                ki: parseFloat(document.getElementById('ki').value),
+                kd: parseFloat(document.getElementById('kd').value),
+                target: parseFloat(document.getElementById('target').value)
+            };
+            try { ws.send(JSON.stringify(p)); } catch(e) {}
+        }
+        
+        function start() { send(); }
+        function stop() { out = 0; }
+        function reset() { enc = 0; data = []; tgt = []; }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
