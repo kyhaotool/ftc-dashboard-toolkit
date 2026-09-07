@@ -1,7 +1,7 @@
 # HRC_34034 - FTC 2026 Robot Controller
 
 ## Team: HRC_34034
-## Season: DECODE (2025-2026)
+## Season: All game (2026-20XX)
 
 ---
 
